@@ -39,7 +39,7 @@ Se você for um ser humano normal e está usando Windows: 🥚🎉
 Com o ambiente virtual ativado, instale o FastAPI e Uvicorn:
 
 ```bash
-pip install fastapi uvicorn
+pip install -r requirements.txt
 ```
 
 #### 5. Executar o Servidor
