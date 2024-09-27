@@ -41,3 +41,4 @@ def get_temporal_data(parameters: str, longitude: Union[int, float], latitude: U
         
     except requests.exceptions.RequestException as req_err:
             return f"Erro na requisição: {req_err}"
+
