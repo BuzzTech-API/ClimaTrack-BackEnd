@@ -6,13 +6,14 @@ router = APIRouter()
 
 @router.get("/climate/")
 async def get_climate_data(
-    parameters: str,
     longitude: float,
     latitude: float,
     start: int,
     end: int
 ):
     try:
+        # Definindo diretamente os parametros fixos
+        parameters = "T2M,PRECTOTCORR"
         # Chama a função que acessa a API da NASA
         response = get_temporal_data(parameters, longitude, latitude, start, end)
         
@@ -20,11 +21,11 @@ async def get_climate_data(
         if isinstance(response, str):
             raise HTTPException(status_code=400, detail=response)
         
-        print("Resposta da API da NASA JSON cru:", response)
+        #print("Resposta da API da NASA JSON cru:", response)
         
         formatted_response = format_climate_response(response)
         
-        print("Resposta da API da NASA formatada:", formatted_response)
+        #print("Resposta da API da NASA formatada:", formatted_response)
 
         return formatted_response  # Retorna o JSON da API da NASA
     
