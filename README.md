@@ -46,7 +46,7 @@ pip install -r requirements.txt
 Inicie o servidor utilizando Uvicorn:
 
 ```bash
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 ```
 
 #### 6. Acesso a Documentação da API para Teste de Conexão e Rotas
