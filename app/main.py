@@ -1,11 +1,8 @@
 from fastapi import FastAPI
-from app.routers import climate
-
+from app.routers import climate, location
 app = FastAPI()
 
 # Rota de clima
 app.include_router(climate.router)
-
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+# Rotas relacionadas a localização
+app.include_router(location.router)
