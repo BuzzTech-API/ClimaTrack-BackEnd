@@ -26,9 +26,12 @@ async def add_location(location: Location):
         }
 
         # Adiciona os dados ao Firestore
-        collection_ref.add(data)
+        doc_ref = collection_ref.add(data)
 
-        return {"message": "Localização adicionada com sucesso!"}
+        return {
+            "id": doc_ref[1].id,  # Retorna o ID do documento recém-criado
+            "message": "Localização adicionada com sucesso!"
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao adicionar localização: {e}")
