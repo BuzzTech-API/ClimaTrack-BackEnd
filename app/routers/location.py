@@ -49,3 +49,23 @@ def delete_location(id_location: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao deletar localização: {e}")
+    
+# Ivan Germano: Rota para buscar todas as localizações utilizando stream() que é uma função fornecida pela 
+# biblioteca do Firebase para o Firestore. Ele é utilizado para obter todos os documentos dentro de uma coleção.
+@router.get("/find_all_locations/")
+async def find_all_locations():
+    try:
+        locations = []
+        docs = collection_ref.stream()
+        for doc in docs:
+            location_data = doc.to_dict()
+            # Ivan Germano: Adiciona o ID do documento para permitir a manipulação dele no frontend
+            location_data["id"] = doc.id 
+            locations.append(location_data)
+
+        # Ivan Germano: O print abaixo é para debug caso queira ver como os dados vem do firestore.
+        # print(locations) 
+        return {"locations": locations}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar localizações: {e}")
