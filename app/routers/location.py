@@ -69,3 +69,20 @@ async def find_all_locations():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar localizações: {e}")
+
+# Ivan Germano: Está é a rota que permite o usuário alterar o nome do local salvo   
+@router.put("/edit_location_name")
+async def edit_location_name(id_location: str, new_name: str):
+
+    try:
+        # Ivan Germano: Verifica se a localização com o ID fornecido existe
+        if not exist_location_by_id(id_location):
+            raise HTTPException(status_code=404, detail="Localização não encontrada no banco de dados.")
+        
+        # Ivan Germano: Atualiza o nome do local no Firestore
+        collection_ref.document(id_location).update({"nome": new_name})
+        
+        return {"message": "Nome do local atualizado com sucesso!"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar o nome do local: {e}")
