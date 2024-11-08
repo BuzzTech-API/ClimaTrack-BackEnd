@@ -2,6 +2,7 @@ import asyncio
 
 from datetime import datetime
 
+from app.services.check_temperature import check_extreme_temperature
 from app.models.location_model import LocationDTO, LocationsDTO
 from app.routers.location import find_all_locations
 from app.routers.climate import get_current_climate_data
@@ -27,26 +28,6 @@ async def verify_locations(
 
     # Executa todas as tarefas de uma vez
     await asyncio.gather(*tasks)
-
-
-async def check_extreme_temperature(
-    location: LocationDTO
-) -> None:
-    """"Exemplo de função que checa determinado parâmetro"""
-    current_data = await get_current_climate_data(location.latitude, location.longitude)
-
-    # Temperatura do dia atual
-    current_temp = current_data[1]['temperature_max (C°)']
-
-    temperature_threshold = 20  # Define o limite. Pegar das preferencias de local do usuario posteriormente.
-
-    # Verifica se a temperatura excede o limite (ajuste conforme necessário)
-    # É possivel colocar mais verificações como temperatura mínima
-    if current_temp > temperature_threshold:
-        message = f"A temperatura em {location.nome} ultrapassou o limite estipulado!" # Menagem da notificação
-        type = "Temperatura Extrema" # Tipo da notificação
-        add_notification_to_firestore(message, type, location.id)
-
 
 def add_notification_to_firestore(
     message: str, 
