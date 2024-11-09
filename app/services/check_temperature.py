@@ -11,14 +11,39 @@ async def check_extreme_temperature(
     current_data = await get_current_climate_data(location.latitude, location.longitude)
 
     # Temperatura do dia atual
-    current_temp = current_data[1]['temperature_max (C°)']
+    current_temp = current_data[1]
 
-    temperature_threshold = 20  # Define o limite. Pegar das preferencias de local do usuario posteriormente.
+    temperature_max_threshold = 20  # Define o limite maximo da temperatura. Pegar das preferencias de local do usuario posteriormente.
+    temperature_min_threshold = 30  # Define o limite minimo da temperatura. Pegar das preferencias de local do usuario posteriormente.
 
     # Verifica se a temperatura excede o limite (ajuste conforme necessário)
-    # É possivel colocar mais verificações como temperatura mínima
-    if current_temp > temperature_threshold:
-        message = f"A temperatura em {location.nome} ultrapassou o limite estipulado!" # Menagem da notificação
+    if current_temp > temperature_max_threshold:
+        message = f"A temperatura em {location.nome} está a cima do limite estipulado!" # Menagem da notificação
+        await add_notification_to_firestore(message, type, location.id)
+    if current_temp < temperature_min_threshold:
+        message = f"A temperatura em {location.nome} está a baixo do limite estipulado!" # Menagem da notificação
+        await add_notification_to_firestore(message, type, location.id)
+
+
+async def check_extreme_precipitation(
+    location: LocationDTO
+) -> None:
+    """"Exemplo de função que checa determinado parâmetro"""
+    type = "Precipitacao Extrema" #Tipo da notificação
+    current_data = await get_current_climate_data(location.latitude, location.longitude)
+
+    # Precipitacao do dia atual
+    current_prec = current_data[2]
+
+    precipitation_max_threshold = 0  # Define o limite maximo da humidade. Pegar das preferencias de local do usuario posteriormente.
+    precipitation_min_threshold = 1  # Define o limite minimo da humidade. Pegar das preferencias de local do usuario posteriormente.
+
+    # Verifica se a precipitação excede o limite (ajuste conforme necessário)
+    if current_prec > precipitation_max_threshold:
+        message = f"A precipitação em {location.nome} está a cima do limite estipulado!" # Menagem da notificação
+        await add_notification_to_firestore(message, type, location.id)
+    if current_prec < precipitation_min_threshold:
+        message = f"A precipitação em {location.nome} está a baixo do limite estipulado!" # Menagem da notificação
         await add_notification_to_firestore(message, type, location.id)
 
 
