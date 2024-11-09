@@ -1,7 +1,7 @@
 import asyncio
 
 from datetime import datetime
-from app.services.check_temperature import check_extreme_temperature, check_prolonged_temperature
+from app.services.check_temperature import check_extreme_temperature, check_extreme_precipitation, check_prolonged_temperature
 from app.models.location_model import LocationsDTO
 from app.routers.location import find_all_locations
 
@@ -21,10 +21,12 @@ async def verify_locations(
         if not location.isOffline: # Verifica se a localização não está offline
             # Colocar mais verificações por location caso necessário
             task1 = check_extreme_temperature(location)
-            task2 = check_prolonged_temperature(location)
+            task2 = check_extreme_precipitation(location)
+            task3 = check_prolonged_temperature(location)
 
             tasks.append(task1)
             tasks.append(task2)
+            tasks.append(task3)
 
     # Executa todas as tarefas de uma vez
     await asyncio.gather(*tasks)
