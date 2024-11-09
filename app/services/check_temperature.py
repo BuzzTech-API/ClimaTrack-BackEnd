@@ -2,6 +2,11 @@ from app.routers.climate import get_current_climate_data, get_climate_data
 from app.notifications.notifications_firebase import add_notification_to_firestore
 from app.models.location_model import LocationDTO
 from app.models.climate_model import ApiResponse
+from app.database.firebase import get_db
+from fastapi import HTTPException
+from google.cloud.firestore import FieldFilter
+from datetime import datetime, timedelta
+
 
 async def check_extreme_temperature(
     location: LocationDTO
@@ -50,44 +55,101 @@ async def check_extreme_precipitation(
 async def check_prolonged_temperature(
     location: LocationDTO
 ) -> None:
-    """"Exemplo de função que checa determinado parâmetro"""
-    type = "Precipitação Extrema Prolongada" # Tipo da notificação
-
-    # Pega os dias estipulados pelo usuário.
-    # Com as preferencias do usuario, pegar o dia em que a preferencia foi criada e ir adicionando aos dias. Ex: começou dia 07 com 5 dias e ja se passou 2 vai do dia 07 ao 09
-    data = await get_climate_data(location.longitude, location.latitude, 20240912, 20240922)
-    climate = ApiResponse(**data)
-
-    # Calculando a média de temperatura e precipitação 
-    total_temperature = sum(item.temperature for item in api_response.data) 
-    total_precipitation = sum(item.precipitation for item in api_response.data) 
-    num_days = len(api_response.data)
-
-    # Média de temperatura e precipitação
-    average_temperature = total_temperature / num_days 
-    average_precipitation = total_precipitation / num_days
-
-    temperature_threshold_max = 20  # Define o limite máximo. Pegar das preferencias de local do usuario posteriormente.
-    temperature_threshold_min = 0   # Define o limite minimo. Exemplo
-
-
-    precipitation_threshold_max = 200
-    precipitation_threshold_min = 0
-    # Verifica se a temperatura excede o limite (ajuste conforme necessário)
-    # É possivel colocar mais verificações como temperatura mínima
-    if average_temperature > temperature_threshold_max:
-        message = f"A temperatura média máxima em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" # Menagem da notificação
-        await add_notification_to_firestore(message, type, location.id)
-
-    if average_temperature <= temperature_threshold_min:
-        message = f"A temperatura média mínima em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" # Menagem da notificação
-        await add_notification_to_firestore(message, type, location.id)
     
-    if average_precipitation > precipitation_threshold_min:
-        message = f"A precipitação média máxima em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" # Menagem da notificação
-        await add_notification_to_firestore(message, type, location.id)
-
-    if average_precipitation <= precipitation_threshold_min:
-        message = f"A precipitação média mínima em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" # Menagem da notificação
-        await add_notification_to_firestore(message, type, location.id)
+    type = "Temperatura Média Alta Prolongada"
+    db = get_db()
+    parametros_ref = db.collection("parametros")
+    parametro = None
     
+    try:
+        docs = (
+            parametros_ref
+            .where(filter=FieldFilter("location_id", "==", location.id))
+            .stream()
+        )
+
+        for doc in docs:
+            if doc.exists:
+                parametro = doc.to_dict()
+                
+        if not parametro:
+            raise HTTPException(status_code=404, detail="Parâmetro não encontrado para a localização.")
+
+        data_criacao = parametro['data_criacao']  # Supondo que 'data_criacao' é um campo de datetime
+        
+        data_final = data_criacao + timedelta(days=parametro['duracao_max'])
+        
+        data_inicio_formatada = data_criacao.strftime("%Y%m%d")
+        data_final_formatada = data_final.strftime("%Y%m%d")
+        data_atual_formatada = datetime.now().strftime("%Y%m%d")
+
+        if data_final_formatada == data_atual_formatada:
+            data = await get_climate_data(location.longitude, location.latitude, data_inicio_formatada, data_final_formatada)
+            climate = ApiResponse(**data)
+            
+            total_temperature = sum(item.temperature for item in climate.data) 
+            num_days = len(climate.data)
+            
+            average_temperature = total_temperature / num_days 
+            
+            if average_temperature > parametro.max_temp:
+                message = f"A temperatura média máxima de {parametro.max_temp}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" 
+                await add_notification_to_firestore(message, type, location.id)
+                
+            if average_temperature <= parametro.min_temp:
+                message = f"A temperatura média mínima de {parametro.min_temp}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!"
+                await add_notification_to_firestore(message, type, location.id)
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao procurar verificar temperatura prolongada: {e}")
+    
+async def check_prolonged_pluvi(
+    location: LocationDTO
+) -> None:
+    
+    type = "Precipitação Média Alta Prolongada"
+    db = get_db()
+    parametros_ref = db.collection("parametros")
+    parametro = None
+    
+    try:
+        docs = (
+            parametros_ref
+            .where(filter=FieldFilter("location_id", "==", location.id))
+            .stream()
+        )
+
+        for doc in docs:
+            if doc.exists:
+                parametro = doc.to_dict()
+                
+        if not parametro:
+            raise HTTPException(status_code=404, detail="Parâmetro não encontrado para a localização.")
+
+        data_criacao = parametro['data_criacao']  # Supondo que 'data_criacao' é um campo de datetime
+        
+        data_final = data_criacao + timedelta(days=parametro['duracao_max'])
+        
+        data_inicio_formatada = data_criacao.strftime("%Y%m%d")
+        data_final_formatada = data_final.strftime("%Y%m%d")
+        data_atual_formatada = datetime.now().strftime("%Y%m%d")
+
+        if data_final_formatada == data_atual_formatada:
+            data = await get_climate_data(location.longitude, location.latitude, data_inicio_formatada, data_final_formatada)
+            climate = ApiResponse(**data)
+            
+            total_precipitation= sum(item.precipitation for item in climate.data) 
+            num_days = len(climate.data)
+            
+            average_temperature = total_precipitation / num_days 
+            
+            if average_temperature > parametro.max_pluvi:
+                message = f"A precipitação média máxima de {parametro.max_pluvi}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" 
+                await add_notification_to_firestore(message, type, location.id)
+                
+            if average_temperature <= parametro.min_pluvi:
+                message = f"A precipitação média mínima de {parametro.min_pluvi}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!"
+                await add_notification_to_firestore(message, type, location.id)
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao procurar verificar temperatura prolongada: {e}")

@@ -1,11 +1,13 @@
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
-from app.models.location_model import Location
+from app.models.location_model import Location, LocationParameters
 from app.database.firebase import get_db
-from app.services.location_services import exist_location_by_lat_long, exist_location_by_id, validate_location
+from app.services.location_services import exist_location_by_lat_long, exist_location_by_id, validate_location, validate_parameters
 
 router = APIRouter()
 db = get_db()
 collection_ref = db.collection("localizacoes")
+parametros_ref = db.collection("parametros")
 
 @router.post("/add_location/")
 async def add_location(location: Location):
@@ -86,3 +88,29 @@ async def edit_location_name(id_location: str, new_name: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar o nome do local: {e}")
+    
+@router.post("/parameters_location/")
+async def add_parameters(parameters :LocationParameters):
+    try:
+        
+        if not validate_parameters(parameters.location_id):
+            raise HTTPException(status_code=400, detail="Localização já possui parâmetros.")
+        
+        data_atual = datetime.now()
+        
+        data = {
+            "location_id": parameters.location_id,
+            "max_pluvi": parameters.max_pluvi,
+            "min_pluvi": parameters.min_pluvi,
+            "max_temp": parameters.max_temp,
+            "min_temp": parameters.min_temp,
+            "duracao_max": parameters.duracao_max,
+            "data_criacao": data_atual
+        }
+
+        parametros_ref.add(data)
+
+        return {"message": "Parâmetros adicionados com sucesso!"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao adionar os parâmetros da localização: {e}")
