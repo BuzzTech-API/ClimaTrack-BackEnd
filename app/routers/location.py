@@ -96,8 +96,6 @@ async def add_parameters(parameters :LocationParameters):
         if not validate_parameters(parameters.location_id):
             raise HTTPException(status_code=400, detail="Localização já possui parâmetros.")
         
-        data_atual = datetime.now()
-        
         data = {
             "location_id": parameters.location_id,
             "max_pluvi": parameters.max_pluvi,
@@ -105,7 +103,6 @@ async def add_parameters(parameters :LocationParameters):
             "max_temp": parameters.max_temp,
             "min_temp": parameters.min_temp,
             "duracao_max": parameters.duracao_max,
-            "data_criacao": data_atual
         }
 
         parametros_ref.add(data)

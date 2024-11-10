@@ -74,31 +74,27 @@ async def check_prolonged_temperature(
                 
         if not parametro:
             raise HTTPException(status_code=404, detail="Parâmetro não encontrado para a localização.")
-
-        data_criacao = parametro['data_criacao']  # Supondo que 'data_criacao' é um campo de datetime
         
-        data_final = data_criacao + timedelta(days=parametro['duracao_max'])
+        data_inicial = datetime.now() - timedelta(days=parametro['duracao_max'])
         
-        data_inicio_formatada = data_criacao.strftime("%Y%m%d")
-        data_final_formatada = data_final.strftime("%Y%m%d")
-        data_atual_formatada = datetime.now().strftime("%Y%m%d")
+        data_inicio_formatada = data_inicial.strftime("%Y%m%d")
+        data_final_formatada = datetime.now().strftime("%Y%m%d")
 
-        if data_final_formatada == data_atual_formatada:
-            data = await get_climate_data(location.longitude, location.latitude, data_inicio_formatada, data_final_formatada)
-            climate = ApiResponse(**data)
+        data = await get_climate_data(location.longitude, location.latitude, data_inicio_formatada, data_final_formatada)
+        climate = ApiResponse(**data)
             
-            total_temperature = sum(item.temperature for item in climate.data) 
-            num_days = len(climate.data)
+        total_temperature = sum(item.temperature for item in climate.data) 
+        num_days = len(climate.data)
             
-            average_temperature = total_temperature / num_days 
+        average_temperature = total_temperature / num_days 
             
-            if average_temperature > parametro.max_temp:
-                message = f"A temperatura média máxima de {parametro.max_temp}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" 
-                await add_notification_to_firestore(message, type, location.id)
+        if average_temperature > parametro.max_temp:
+            message = f"A temperatura média máxima de {parametro.max_temp}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" 
+            await add_notification_to_firestore(message, type, location.id)
                 
-            if average_temperature <= parametro.min_temp:
-                message = f"A temperatura média mínima de {parametro.min_temp}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!"
-                await add_notification_to_firestore(message, type, location.id)
+        if average_temperature <= parametro.min_temp:
+            message = f"A temperatura média mínima de {parametro.min_temp}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!"
+            await add_notification_to_firestore(message, type, location.id)
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao procurar verificar temperatura prolongada: {e}")
@@ -125,31 +121,27 @@ async def check_prolonged_pluvi(
                 
         if not parametro:
             raise HTTPException(status_code=404, detail="Parâmetro não encontrado para a localização.")
-
-        data_criacao = parametro['data_criacao']  # Supondo que 'data_criacao' é um campo de datetime
         
-        data_final = data_criacao + timedelta(days=parametro['duracao_max'])
+        data_inicial = datetime.now() - timedelta(days=parametro['duracao_max'])
         
-        data_inicio_formatada = data_criacao.strftime("%Y%m%d")
-        data_final_formatada = data_final.strftime("%Y%m%d")
-        data_atual_formatada = datetime.now().strftime("%Y%m%d")
+        data_inicio_formatada = data_inicial.strftime("%Y%m%d")
+        data_final_formatada = datetime.now().strftime("%Y%m%d")
 
-        if data_final_formatada == data_atual_formatada:
-            data = await get_climate_data(location.longitude, location.latitude, data_inicio_formatada, data_final_formatada)
-            climate = ApiResponse(**data)
+        data = await get_climate_data(location.longitude, location.latitude, data_inicio_formatada, data_final_formatada)
+        climate = ApiResponse(**data)
             
-            total_precipitation= sum(item.precipitation for item in climate.data) 
-            num_days = len(climate.data)
+        total_precipitation= sum(item.precipitation for item in climate.data) 
+        num_days = len(climate.data)
             
-            average_temperature = total_precipitation / num_days 
+        average_precipitation = total_precipitation / num_days 
             
-            if average_temperature > parametro.max_pluvi:
-                message = f"A precipitação média máxima de {parametro.max_pluvi}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!" 
-                await add_notification_to_firestore(message, type, location.id)
+        if average_precipitation > parametro.max_pluvi:
+            message = f"A precipitação média máxima de {parametro.max_pluvi}°C em {location.nome} ultrapassou o limite estipulado de{num_days} dias!" 
+            await add_notification_to_firestore(message, type, location.id)
                 
-            if average_temperature <= parametro.min_pluvi:
-                message = f"A precipitação média mínima de {parametro.min_pluvi}°C em {location.nome} ultrapassou o limite estipulado de {num_days} dias!"
-                await add_notification_to_firestore(message, type, location.id)
+        if average_precipitation <= parametro.min_pluvi:
+            message = f"A precipitação média mínima de {parametro.min_pluvi}°C em {location.nome} ultrapassou o limite estipulado de{num_days} dias!"
+            await add_notification_to_firestore(message, type, location.id)
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao procurar verificar temperatura prolongada: {e}")
