@@ -63,7 +63,7 @@ def weather_forecast(longitude: Union[int, float], latitude: Union[int, float]):
                 "temperature_min (C°)": daily_temperature_2m_min[i],
                 "precipitation (mm)": daily_precipitation[i],
             })
-
+    
         return daily_data
     
     except Exception as e:

@@ -4,7 +4,7 @@ from google.cloud.firestore import FieldFilter
 
 db = get_db()
 collection_ref = db.collection("localizacoes")
-
+parametros_ref = db.collection("parametros")
 
 def exist_location_by_lat_long(latitude, longitude):
     try:
@@ -47,3 +47,22 @@ def validate_location(latitude, longitude):
         return False
     
     return True
+
+def validate_parameters(id_location):
+    
+    try:
+        
+        docs = (
+            parametros_ref
+            .where(filter=FieldFilter("location_id", "==", id_location))
+            .stream()
+        )
+
+        for doc in docs:
+            if doc.exists:
+                return False
+        
+        return True   
+
+    except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro ao procurar localização pelo ID: {e}")
