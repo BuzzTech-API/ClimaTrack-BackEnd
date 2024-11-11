@@ -1,7 +1,10 @@
+from typing import Any, Dict, List
+
 from fastapi import APIRouter, HTTPException
 
 from app.database.firebase import get_db
 from app.models.location_model import Location, LocationParameters
+from app.notifications.notifications_firebase import get_notifications_by_local
 from app.services.location_services import (
     exist_location_by_id,
     validate_location,
@@ -152,3 +155,12 @@ async def add_parameters(parameters: LocationParameters):
         raise HTTPException(
             status_code=500, detail=f"Erro ao adionar os parâmetros da localização: {e}"
         )
+
+
+@router.get("/notifications/{id_local}", response_model=List[Dict[str, Any]])
+async def get_notifications(id_local: str):
+    try:
+        notifications = await get_notifications_by_local(id_local)
+        return notifications
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro ao buscar notificações")
